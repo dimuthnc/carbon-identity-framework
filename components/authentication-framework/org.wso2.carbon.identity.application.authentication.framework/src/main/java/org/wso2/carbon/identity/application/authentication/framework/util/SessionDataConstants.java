@@ -43,7 +43,8 @@ public class SessionDataConstants {
     public static final String AND_TAG = " AND ";
 
 
-    public static final String POST_URL = "https://localhost:9444/analytics/search";
+    public static final String TABLE_SEARCH_URL = "https://localhost:9444/analytics/search";
+    public static final String TABLE_SEARCH_COUNT_URL = "https://localhost:9444/analytics/search_count";
 
     public static final int START_INDEX = 0;
     public static final int RETRIEVE_COUNT = 10;

@@ -83,7 +83,7 @@ public class GetSessionDataFunction implements GetDataFunction{
         HttpClient httpClient = httpClientBuilder.build();
 
         try {
-            HttpPost request = new HttpPost(SessionDataConstants.POST_URL);
+            HttpPost request = new HttpPost(SessionDataConstants.TABLE_SEARCH_URL);
             setAuthorizationHeader(request, SessionDataConstants.USERNAME_CONFIG, SessionDataConstants.PASSWORD_CONFIG);
             request.addHeader(SessionDataConstants.CONTENT_TYPE_TAG, "application/json");
             request.setEntity(entity);

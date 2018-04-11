@@ -66,12 +66,6 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
                 getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
                         .getUserStoreDomain()) +
-                SessionDataConstants.START_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
-                SessionDataConstants.START_INDEX + "," +
-                SessionDataConstants.COUNT_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
-                SessionDataConstants.RETRIEVE_COUNT +
                 "}";
 
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
@@ -79,7 +73,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         HttpClient httpClient = httpClientBuilder.build();
 
         try {
-            HttpPost request = new HttpPost(SessionDataConstants.POST_URL);
+            HttpPost request = new HttpPost(SessionDataConstants.TABLE_SEARCH_COUNT_URL);
             setAuthorizationHeader(request, SessionDataConstants.USERNAME_CONFIG, SessionDataConstants.PASSWORD_CONFIG);
             request.addHeader(SessionDataConstants.CONTENT_TYPE_TAG, "application/json");
             request.setEntity(entity);
@@ -93,8 +87,8 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 while ((line = bufferedReader.readLine()) != null) {
                     responseResult.append(line);
                 }
-                JSONArray jsonArray = new JSONArray(responseResult.toString());
-                if (jsonArray.length() < sessionLimit) {
+                int sessionCount = Integer.valueOf(responseResult.toString());
+                if (sessionCount < sessionLimit) {
                     state = true;
                 }
 
@@ -134,7 +128,6 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 SessionDataConstants.USERSTORE_TAG +
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
                 userStore +
-                SessionDataConstants.QUOTE +
-                ",";
+                SessionDataConstants.QUOTE;
     }
 }

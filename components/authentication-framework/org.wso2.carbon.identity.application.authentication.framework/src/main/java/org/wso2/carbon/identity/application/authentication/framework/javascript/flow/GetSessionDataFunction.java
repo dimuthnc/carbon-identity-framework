@@ -18,6 +18,7 @@
  */
 package org.wso2.carbon.identity.application.authentication.framework.javascript.flow;
 
+import org.apache.axiom.om.OMElement;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -35,6 +36,7 @@ import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.SessionDataConstants;
+import org.wso2.carbon.identity.core.util.IdentityConfigParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,6 +50,8 @@ import java.util.Map;
 public class GetSessionDataFunction implements GetDataFunction{
 
     private static final Log log = LogFactory.getLog(GetSessionDataFunction.class);
+    OMElement sessionManagerConfigElement = IdentityConfigParser.getInstance()
+            .getConfigElement("SessionLimitDataConfig");
     @Override
     public JSONObject retrieve(JsAuthenticationContext context, Map<String, String> map) {
         int retrieveCount = SessionDataConstants.RETRIEVE_COUNT;
@@ -62,6 +66,7 @@ public class GetSessionDataFunction implements GetDataFunction{
             return null;
         }
 
+
         String data = "{" +
                 SessionDataConstants.TABLE_NAME_TAG +
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
@@ -69,7 +74,8 @@ public class GetSessionDataFunction implements GetDataFunction{
                 SessionDataConstants.QUERY_TAG +
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
                 getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
-                        .getUserStoreDomain()) +
+                        .getUserStoreDomain())
+                +","+
                 SessionDataConstants.START_TAG +
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
                 SessionDataConstants.START_INDEX + "," +
@@ -136,7 +142,6 @@ public class GetSessionDataFunction implements GetDataFunction{
                 SessionDataConstants.USERSTORE_TAG +
                 SessionDataConstants.ATTRIBUTE_SEPARATOR +
                 userStore +
-                SessionDataConstants.QUOTE +
-                ",";
+                SessionDataConstants.QUOTE;
     }
 }

@@ -30,7 +30,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.json.JSONArray;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.SessionDataConstants;
@@ -49,7 +48,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
 
     @Override
-    public Boolean validate(JsAuthenticationContext context, Map<String,String> map) {
+    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) {
 
         int sessionLimit = Integer.valueOf(map.get("sessionLimit"));
         boolean state = false;
@@ -92,7 +91,6 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                     state = true;
                 }
 
-
             } else {
                 log.error("Failed to retrieve data from endpoint. Error code :" +
                         response.getStatusLine().getStatusCode());
@@ -104,6 +102,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
 
         return state;
     }
+
 
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 

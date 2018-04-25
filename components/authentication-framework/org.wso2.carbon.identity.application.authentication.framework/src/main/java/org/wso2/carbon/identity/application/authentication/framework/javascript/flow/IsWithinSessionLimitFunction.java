@@ -32,7 +32,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
-import org.wso2.carbon.identity.application.authentication.framework.util.SessionDataConstants;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -58,11 +58,12 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         }
 
         String data = "{" +
-                SessionDataConstants.TABLE_NAME_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
-                SessionDataConstants.ACTIVE_SESSION_TABLE_NAME + "," +
-                SessionDataConstants.QUERY_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
+                
+                FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
+                FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME + "," +
+                FrameworkConstants.JSSessionCountValidation.QUERY_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
                         .getUserStoreDomain()) +
                 "}";
@@ -72,15 +73,15 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         HttpClient httpClient = httpClientBuilder.build();
 
         try {
-            HttpPost request = new HttpPost(SessionDataConstants.TABLE_SEARCH_COUNT_URL);
-            setAuthorizationHeader(request, SessionDataConstants.USERNAME_CONFIG, SessionDataConstants.PASSWORD_CONFIG);
-            request.addHeader(SessionDataConstants.CONTENT_TYPE_TAG, "application/json");
+            HttpPost request = new HttpPost(FrameworkConstants.JSSessionCountValidation.TABLE_SEARCH_COUNT_URL);
+            setAuthorizationHeader(request, FrameworkConstants.JSSessionCountValidation.USERNAME_CONFIG, FrameworkConstants.JSSessionCountValidation.PASSWORD_CONFIG);
+            request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
             request.setEntity(entity);
 
             HttpResponse response = httpClient.execute(request);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
-                        SessionDataConstants.UTF_8_TAG));
+                        FrameworkConstants.JSSessionCountValidation.UTF_8_TAG));
                 StringBuilder responseResult = new StringBuilder();
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
@@ -103,30 +104,29 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         return state;
     }
 
-
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 
-        String toEncode = username + SessionDataConstants.ATTRIBUTE_SEPARATOR + password;
+        String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
         byte[] encoding = Base64.encodeBase64(toEncode.getBytes());
         String authHeader = new String(encoding, Charset.defaultCharset());
-        httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION, SessionDataConstants.AUTH_TYPE_KEY + authHeader);
+        httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION, FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
 
     }
 
     private String getQuery(String tenantDomain, String username, String userStore) {
 
-        return SessionDataConstants.QUOTE +
-                SessionDataConstants.TENANT_DOMAIN_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
+        return FrameworkConstants.JSSessionCountValidation.QUOTE +
+                FrameworkConstants.JSSessionCountValidation.TENANT_DOMAIN_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 tenantDomain +
-                SessionDataConstants.AND_TAG +
-                SessionDataConstants.USERNAME_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
+                FrameworkConstants.JSSessionCountValidation.AND_TAG +
+                FrameworkConstants.JSSessionCountValidation.USERNAME_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 username +
-                SessionDataConstants.AND_TAG +
-                SessionDataConstants.USERSTORE_TAG +
-                SessionDataConstants.ATTRIBUTE_SEPARATOR +
+                FrameworkConstants.JSSessionCountValidation.AND_TAG +
+                FrameworkConstants.JSSessionCountValidation.USERSTORE_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 userStore +
-                SessionDataConstants.QUOTE;
+                FrameworkConstants.JSSessionCountValidation.QUOTE;
     }
 }

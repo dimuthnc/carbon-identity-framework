@@ -288,4 +288,22 @@ public abstract class FrameworkConstants {
         private InternalRoleDomains() {
         }
     }
+
+    public static class JSSessionCountValidation{
+        public static final String USERNAME_TAG = "username";
+        public static String USERSTORE_TAG = "userstoreDomain";
+        public static final String CONTENT_TYPE_TAG = "Content-type";
+        public static final String UTF_8_TAG = "UTF-8";
+        public static final String AUTH_TYPE_KEY = "Basic ";
+        public static final String QUOTE = "\"";
+        public static final String ATTRIBUTE_SEPARATOR = ":";
+        public static final String ACTIVE_SESSION_TABLE_NAME = QUOTE + "ORG_WSO2_IS_ANALYTICS_STREAM_ACTIVESESSIONS" +QUOTE;
+        public static final String TABLE_NAME_TAG = QUOTE + "tableName" + QUOTE;
+        public static final String QUERY_TAG = QUOTE + "query" + QUOTE;
+        public static final String TENANT_DOMAIN_TAG = "tenantDomain";
+        public static final String AND_TAG = " AND ";
+        public static final String TABLE_SEARCH_COUNT_URL = "https://localhost:9444/analytics/search_count";
+        public static final String USERNAME_CONFIG = "admin";
+        public static final String PASSWORD_CONFIG = "admin";
+    }
 }

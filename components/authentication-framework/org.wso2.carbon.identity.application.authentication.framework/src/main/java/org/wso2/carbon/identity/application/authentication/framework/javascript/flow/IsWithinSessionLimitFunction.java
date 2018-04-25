@@ -41,7 +41,8 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
- * TODO:Class level comment
+ * Function to check if the given user has valid number of sessions.
+ * The purpose is to perform dynamic authentication selection based on the active session count.
  */
 public class IsWithinSessionLimitFunction implements IsValidFunction {
 

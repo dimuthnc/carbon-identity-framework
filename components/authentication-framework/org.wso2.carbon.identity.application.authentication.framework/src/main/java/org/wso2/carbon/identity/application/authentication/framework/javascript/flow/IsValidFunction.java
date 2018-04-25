@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import java.util.Map;
 
 /**
- * TODO:Class level comment
+ * Function definition for verify some defined requirement is fulfilled. 
  */
 @FunctionalInterface
 public interface IsValidFunction {

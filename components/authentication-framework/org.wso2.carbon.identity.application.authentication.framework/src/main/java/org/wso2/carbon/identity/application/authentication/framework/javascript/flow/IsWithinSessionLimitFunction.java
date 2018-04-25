@@ -48,10 +48,18 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
 
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
 
+    /**
+     * /**
+     * Method to validate user session a given the authentication context and set of required attributes
+     *
+     * @param context Authentication context
+     * @param map     Hash map of attributes required for validation
+     * @return boolean value indicating the validation success/failure
+     */
     @Override
     public Boolean validate(JsAuthenticationContext context, Map<String, String> map) {
 
-        int sessionLimit = Integer.valueOf(map.get("sessionLimit"));
+        int sessionLimit = Integer.valueOf(map.get(FrameworkConstants.JSSessionCountValidation.SESSION_LIMIT_TAG));
         boolean state = false;
         AuthenticatedUser authenticatedUser = context.getWrapped().getLastAuthenticatedUser();
         if (authenticatedUser == null) {
@@ -59,7 +67,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         }
 
         String data = "{" +
-                
+
                 FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG +
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME + "," +
@@ -105,6 +113,13 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         return state;
     }
 
+    /**
+     * Method used for adding authentication header for httpMethod.
+     *
+     * @param httpMethod httpMethod that needs auth header to be added
+     * @param username   username of user
+     * @param password   password of the user
+     */
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 
         String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
@@ -114,6 +129,14 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
 
     }
 
+    /**
+     * Method for generating the table query for retrieving session information.
+     *
+     * @param tenantDomain Tenant Domain User belong to
+     * @param username     Username of the user
+     * @param userStore    Userstore of the user
+     * @return Query String
+     */
     private String getQuery(String tenantDomain, String username, String userStore) {
 
         return FrameworkConstants.JSSessionCountValidation.QUOTE +

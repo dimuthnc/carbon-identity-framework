@@ -305,5 +305,7 @@ public abstract class FrameworkConstants {
         public static final String TABLE_SEARCH_COUNT_URL = "https://localhost:9444/analytics/search_count";
         public static final String USERNAME_CONFIG = "admin";
         public static final String PASSWORD_CONFIG = "admin";
+        public static final String SESSION_LIMIT_TAG = "sessionLimit";
+
     }
 }

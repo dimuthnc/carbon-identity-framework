@@ -63,7 +63,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         boolean state = false;
         AuthenticatedUser authenticatedUser = context.getWrapped().getLastAuthenticatedUser();
         if (authenticatedUser == null) {
-            return null;
+            return false;
         }
 
         String data = "{" +
@@ -100,14 +100,14 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 if (sessionCount < sessionLimit) {
                     state = true;
                 }
-
             } else {
                 log.error("Failed to retrieve data from endpoint. Error code :" +
                         response.getStatusLine().getStatusCode());
             }
-
         } catch (IOException e) {
             log.error("Problem occurred in session data retrieving", e);
+        } catch (NumberFormatException e){
+            log.error("Failed to retrieve session count from response",e);
         }
 
         return state;

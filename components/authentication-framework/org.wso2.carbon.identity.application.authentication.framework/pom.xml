@@ -30,7 +30,7 @@
     <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
     <packaging>bundle</packaging>
     <name>WSO2 Carbon - Identity Application Authentication Framework</name>
-    <version>5.11.163</version>
+    <version>5.11.181</version>
 
     <dependencies>
         <dependency>

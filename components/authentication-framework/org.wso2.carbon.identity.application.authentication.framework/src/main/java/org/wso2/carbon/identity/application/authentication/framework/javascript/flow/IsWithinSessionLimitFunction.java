@@ -31,6 +31,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 
@@ -59,55 +60,22 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     @Override
     public Boolean validate(JsAuthenticationContext context, Map<String, String> map) {
 
-        int sessionLimit = Integer.valueOf(map.get(FrameworkConstants.JSSessionCountValidation.SESSION_LIMIT_TAG));
         boolean state = false;
+        int sessionLimit = getSessionLimitFromMap(map);
         AuthenticatedUser authenticatedUser = context.getWrapped().getLastAuthenticatedUser();
         if (authenticatedUser == null) {
             return false;
         }
-
-        String data = "{" +
-
-                FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG +
-                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
-                FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME + "," +
-                FrameworkConstants.JSSessionCountValidation.QUERY_TAG +
-                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
-                getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
-                        .getUserStoreDomain()) +
-                "}";
-
-        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
-        StringEntity entity = new StringEntity(data, ContentType.APPLICATION_JSON);
-        HttpClient httpClient = httpClientBuilder.build();
-
         try {
-            HttpPost request = new HttpPost(FrameworkConstants.JSSessionCountValidation.TABLE_SEARCH_COUNT_URL);
-            setAuthorizationHeader(request, FrameworkConstants.JSSessionCountValidation.USERNAME_CONFIG, FrameworkConstants.JSSessionCountValidation.PASSWORD_CONFIG);
-            request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
-            request.setEntity(entity);
-
-            HttpResponse response = httpClient.execute(request);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
-                        FrameworkConstants.JSSessionCountValidation.UTF_8_TAG));
-                StringBuilder responseResult = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    responseResult.append(line);
-                }
-                int sessionCount = Integer.valueOf(responseResult.toString());
-                if (sessionCount < sessionLimit) {
-                    state = true;
-                }
-            } else {
-                log.error("Failed to retrieve data from endpoint. Error code :" +
-                        response.getStatusLine().getStatusCode());
+            int sessionCount = getActiveSessionCount(authenticatedUser);
+            if (sessionCount < sessionLimit) {
+                state = true;
             }
-        } catch (IOException e) {
+
+        } catch (IOException | FrameworkException e) {
             log.error("Problem occurred in session data retrieving", e);
-        } catch (NumberFormatException e){
-            log.error("Failed to retrieve session count from response",e);
+        } catch (NumberFormatException e) {
+            log.error("Failed to retrieve session count from response", e);
         }
 
         return state;
@@ -152,5 +120,64 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 userStore +
                 FrameworkConstants.JSSessionCountValidation.QUOTE;
+    }
+
+    /**
+     * Method for retrieving user defined maximum session limit from parameter map
+     *
+     * @param map parameter map passed from JS
+     * @return inter indicating the maximum session Limit
+     */
+    private int getSessionLimitFromMap(Map<String, String> map) {
+
+        return Integer.valueOf(map.get(FrameworkConstants.JSSessionCountValidation.SESSION_LIMIT_TAG));
+    }
+
+    /**
+     * Method to retrieve active session count for the given authenticated user
+     *
+     * @param authenticatedUser Authenticated user object
+     * @return current active session count
+     * @throws IOException
+     * @throws FrameworkException
+     */
+    private int getActiveSessionCount(AuthenticatedUser authenticatedUser) throws IOException, FrameworkException {
+
+        int sessionCount;
+        String data = "{" +
+
+                FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
+                FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME + "," +
+                FrameworkConstants.JSSessionCountValidation.QUERY_TAG +
+                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
+                getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
+                        .getUserStoreDomain()) +
+                "}";
+
+        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+        StringEntity entity = new StringEntity(data, ContentType.APPLICATION_JSON);
+        HttpClient httpClient = httpClientBuilder.build();
+        HttpPost request = new HttpPost(FrameworkConstants.JSSessionCountValidation.TABLE_SEARCH_COUNT_URL);
+        setAuthorizationHeader(request, FrameworkConstants.JSSessionCountValidation.USERNAME_CONFIG, FrameworkConstants.JSSessionCountValidation.PASSWORD_CONFIG);
+        request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
+        request.setEntity(entity);
+        HttpResponse response = httpClient.execute(request);
+
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
+                    FrameworkConstants.JSSessionCountValidation.UTF_8_TAG));
+            StringBuilder responseResult = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                responseResult.append(line);
+            }
+            sessionCount = Integer.valueOf(responseResult.toString());
+            return sessionCount;
+        } else {
+            throw new FrameworkException("Failed to retrieve data from endpoint");
+
+        }
+
     }
 }

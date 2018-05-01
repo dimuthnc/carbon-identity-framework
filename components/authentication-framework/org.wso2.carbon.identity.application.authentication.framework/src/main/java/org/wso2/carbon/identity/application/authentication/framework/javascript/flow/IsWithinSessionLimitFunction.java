@@ -49,6 +49,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
 
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
 
+
     /**
      * /**
      * Method to validate user session a given the authentication context and set of required attributes
@@ -116,7 +117,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 username +
                 FrameworkConstants.JSSessionCountValidation.AND_TAG +
-                FrameworkConstants.JSSessionCountValidation.USERSTORE_TAG +
+                FrameworkConstants.JSSessionCountValidation.USER_STORE_TAG +
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 userStore +
                 FrameworkConstants.JSSessionCountValidation.QUOTE;

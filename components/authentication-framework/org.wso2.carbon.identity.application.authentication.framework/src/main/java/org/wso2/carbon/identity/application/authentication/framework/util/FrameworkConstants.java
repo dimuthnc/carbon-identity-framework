@@ -291,7 +291,7 @@ public abstract class FrameworkConstants {
 
     public static class JSSessionCountValidation{
         public static final String USERNAME_TAG = "username";
-        public static String USERSTORE_TAG = "userstoreDomain";
+        public static final String USER_STORE_TAG = "userstoreDomain";
         public static final String CONTENT_TYPE_TAG = "Content-type";
         public static final String UTF_8_TAG = "UTF-8";
         public static final String AUTH_TYPE_KEY = "Basic ";

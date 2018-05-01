@@ -91,7 +91,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 
         String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
-        byte[] encoding = Base64.encodeBase64(toEncode.getBytes());
+        byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName("UTF-8")));
         String authHeader = new String(encoding, Charset.defaultCharset());
         httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION, FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
 
@@ -173,6 +173,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 responseResult.append(line);
             }
             sessionCount = Integer.valueOf(responseResult.toString());
+            bufferedReader.close();
             return sessionCount;
         } else {
             throw new FrameworkException("Failed to retrieve data from endpoint");

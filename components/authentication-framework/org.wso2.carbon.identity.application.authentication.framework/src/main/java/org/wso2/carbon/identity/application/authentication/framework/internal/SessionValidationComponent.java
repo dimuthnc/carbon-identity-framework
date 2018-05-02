@@ -30,7 +30,7 @@ import org.wso2.carbon.identity.application.authentication.framework.javascript.
 import org.wso2.carbon.identity.application.authentication.framework.javascript.flow.IsWithinSessionLimitFunction;
 
 /**
- * TODO:Class level comment
+ * Provide Javascript function for validating session limit
  */
 @Component(
         name = "identity.application.authentication.framework.extension.js.session.count.component",

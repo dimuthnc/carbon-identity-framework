@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.application.authentication.framework.javascript.flow;
 
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 
 import java.util.Map;
 
@@ -28,6 +29,6 @@ import java.util.Map;
 @FunctionalInterface
 public interface IsValidFunction {
 
-    Boolean validate(JsAuthenticationContext context,Map<String,String> map);
+    Boolean validate(JsAuthenticationContext context,Map<String,String> map) throws AuthenticationFailedException;
 
 }

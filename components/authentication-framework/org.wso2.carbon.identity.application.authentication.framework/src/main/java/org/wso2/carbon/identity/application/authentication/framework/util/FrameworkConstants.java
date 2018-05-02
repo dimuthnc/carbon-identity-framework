@@ -303,8 +303,6 @@ public abstract class FrameworkConstants {
         public static final String TENANT_DOMAIN_TAG = "tenantDomain";
         public static final String AND_TAG = " AND ";
         public static final String TABLE_SEARCH_COUNT_URL = "https://localhost:9444/analytics/search_count";
-        public static final String USERNAME_CONFIG = "admin";
-        public static final String PASSWORD_CONFIG = "admin";
         public static final String SESSION_LIMIT_TAG = "sessionLimit";
 
     }

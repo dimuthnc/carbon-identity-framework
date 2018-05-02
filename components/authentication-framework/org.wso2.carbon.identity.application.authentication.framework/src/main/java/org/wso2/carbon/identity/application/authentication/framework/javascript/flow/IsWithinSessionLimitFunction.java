@@ -31,15 +31,19 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
+import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.authentication.framework.util.SessionValidationConfigParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Map;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * Function to check if the given user has valid number of sessions.
@@ -48,7 +52,11 @@ import java.util.Map;
 public class IsWithinSessionLimitFunction implements IsValidFunction {
 
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
-
+    private static final String USERNAME_CONFIG_NAME = "AnalyticsCredentials.Username";
+    private static final String PASSWORD_CONFIG_NAME = "AnalyticsCredentials.Password";
+    private static final String CHARSET_NAME ="UTF-8";
+    private static final Map<String,Object> configurations = SessionValidationConfigParser.getInstance()
+            .getConfiguration();
 
     /**
      * /**
@@ -59,13 +67,14 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      * @return boolean value indicating the validation success/failure
      */
     @Override
-    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) {
+    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) throws AuthenticationFailedException  {
 
         boolean state = false;
         int sessionLimit = getSessionLimitFromMap(map);
         AuthenticatedUser authenticatedUser = context.getWrapped().getLastAuthenticatedUser();
+
         if (authenticatedUser == null) {
-            return false;
+            throw new AuthenticationFailedException("Unable to find the Authenticated user from previous step");
         }
         try {
             int sessionCount = getActiveSessionCount(authenticatedUser);
@@ -74,11 +83,10 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             }
 
         } catch (IOException | FrameworkException e) {
-            log.error("Problem occurred in session data retrieving", e);
+            throw new AuthenticationFailedException("Problem occurred in session data retrieving",e);
         } catch (NumberFormatException e) {
-            log.error("Failed to retrieve session count from response", e);
+            throw new AuthenticationFailedException("Failed to retrieve session count from response",e);
         }
-
         return state;
     }
 
@@ -92,7 +100,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 
         String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
-        byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName("UTF-8")));
+        byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName(CHARSET_NAME)));
         String authHeader = new String(encoding, Charset.defaultCharset());
         httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION, FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
 
@@ -131,7 +139,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      */
     private int getSessionLimitFromMap(Map<String, String> map) {
 
-        return Integer.valueOf(map.get(FrameworkConstants.JSSessionCountValidation.SESSION_LIMIT_TAG));
+        return parseInt(map.get(FrameworkConstants.JSSessionCountValidation.SESSION_LIMIT_TAG));
     }
 
     /**
@@ -139,8 +147,8 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      *
      * @param authenticatedUser Authenticated user object
      * @return current active session count
-     * @throws IOException
-     * @throws FrameworkException
+     * @throws IOException        When reading response from the REST call is failed
+     * @throws FrameworkException When the REST response is not in 200 state
      */
     private int getActiveSessionCount(AuthenticatedUser authenticatedUser) throws IOException, FrameworkException {
 
@@ -160,7 +168,10 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         StringEntity entity = new StringEntity(data, ContentType.APPLICATION_JSON);
         HttpClient httpClient = httpClientBuilder.build();
         HttpPost request = new HttpPost(FrameworkConstants.JSSessionCountValidation.TABLE_SEARCH_COUNT_URL);
-        setAuthorizationHeader(request, FrameworkConstants.JSSessionCountValidation.USERNAME_CONFIG, FrameworkConstants.JSSessionCountValidation.PASSWORD_CONFIG);
+
+        setAuthorizationHeader(request,
+                configurations.get(USERNAME_CONFIG_NAME).toString(),
+                configurations.get(PASSWORD_CONFIG_NAME).toString());
         request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
         request.setEntity(entity);
         HttpResponse response = httpClient.execute(request);
@@ -173,7 +184,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             while ((line = bufferedReader.readLine()) != null) {
                 responseResult.append(line);
             }
-            sessionCount = Integer.valueOf(responseResult.toString());
+            sessionCount = parseInt(responseResult.toString());
             bufferedReader.close();
             return sessionCount;
         } else {

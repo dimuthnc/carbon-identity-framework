@@ -57,7 +57,6 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private static final String USERNAME_CONFIG_NAME = "AnalyticsCredentials.Username";
     private static final String PASSWORD_CONFIG_NAME = "AnalyticsCredentials.Password";
 
-
     /**
      * Method to validate user session a given the authentication context and set of required attributes
      *
@@ -84,8 +83,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             }
         } catch (FrameworkException e) {
             throw new AuthenticationFailedException("Problem occurred in session data retrieving", e);
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new AuthenticationFailedException("Failed to retrieve session count from response", e);
         }
         return state;
@@ -146,8 +144,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      *
      * @param authenticatedUser Authenticated user object
      * @return current active session count
-     * @throws IOException        When reading response from the REST call is failed
-     * @throws FrameworkException When the REST response is not in 200 state
+     * @throws FrameworkException When the REST response is not in 200 state or failed to read REST response
      */
     private int getActiveSessionCount(AuthenticatedUser authenticatedUser) throws FrameworkException {
 
@@ -172,11 +169,12 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 IdentityUtil.getProperty(PASSWORD_CONFIG_NAME));
         request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
         request.setEntity(entity);
-        try{
+        try {
             HttpResponse response = httpClient.execute(request);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
-                        FrameworkConstants.JSSessionCountValidation.UTF_8_TAG))){
+                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+                        response.getEntity().getContent(),
+                        FrameworkConstants.JSSessionCountValidation.UTF_8_TAG))) {
                     StringBuilder responseResult = new StringBuilder();
                     String line;
                     while ((line = bufferedReader.readLine()) != null) {
@@ -184,31 +182,18 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                     }
                     sessionCount = parseInt(responseResult.toString());
                     return sessionCount;
+                } catch (IOException e) {
+                    throw new FrameworkException("Problem occurred while processing the HTTP Response ");
                 }
-                catch (IOException e){
-                    throw new FrameworkException("Problem occured while processing the HTTP Response ");
-                }
-
-            }
-            else {
-                //TODO remove debug log
-                if (log.isDebugEnabled()) {
-                    log.debug("Endpoint responded with " + response.getStatusLine().getStatusCode() + " status code");
-                }
-                throw new FrameworkException("Failed to retrieve data from endpoint");
+            } else {
+                throw new FrameworkException("Failed to retrieve data from endpoint.Response status code :" +
+                        response.getStatusLine().getStatusCode());
             }
 
-        }catch (IOException e){
-            //TODO
-           throw new FrameworkException("");
+        } catch (IOException e) {
+            throw new FrameworkException("Failed to execute the HTTP Post request");
         }
 
-
-
-
-
-
-
-        }
+    }
 
 }

@@ -59,15 +59,16 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             .getConfiguration();
 
     /**
-     * /**
      * Method to validate user session a given the authentication context and set of required attributes
      *
      * @param context Authentication context
      * @param map     Hash map of attributes required for validation
      * @return boolean value indicating the validation success/failure
+     * @throws AuthenticationFailedException when exception occurred in session retrieving method
      */
     @Override
-    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) throws AuthenticationFailedException {
+    public Boolean validate(JsAuthenticationContext context, Map<String, String> map)
+            throws AuthenticationFailedException {
 
         boolean state = false;
         int sessionLimit = getSessionLimitFromMap(map);
@@ -83,6 +84,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             }
 
         } catch (IOException | FrameworkException e) {
+            //TODO
             throw new AuthenticationFailedException("Problem occurred in session data retrieving", e);
         } catch (NumberFormatException e) {
             throw new AuthenticationFailedException("Failed to retrieve session count from response", e);
@@ -102,7 +104,8 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
         String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
         byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName(CHARSET_NAME)));
         String authHeader = new String(encoding, Charset.defaultCharset());
-        httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION, FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
+        httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION,
+                FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
 
     }
 
@@ -188,8 +191,10 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             bufferedReader.close();
             return sessionCount;
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Endpoint responded with " + response.getStatusLine().getStatusCode() + " status code");
+            }
             throw new FrameworkException("Failed to retrieve data from endpoint");
-
         }
 
     }

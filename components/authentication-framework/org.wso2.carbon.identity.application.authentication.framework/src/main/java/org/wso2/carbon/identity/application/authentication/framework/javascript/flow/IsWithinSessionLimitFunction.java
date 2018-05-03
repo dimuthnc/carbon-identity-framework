@@ -41,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static java.lang.Integer.parseInt;
@@ -54,7 +55,6 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
     private static final String USERNAME_CONFIG_NAME = "AnalyticsCredentials.Username";
     private static final String PASSWORD_CONFIG_NAME = "AnalyticsCredentials.Password";
-    private static final String CHARSET_NAME = "UTF-8";
     private static final Map<String, Object> configurations = SessionValidationConfigParser.getInstance()
             .getConfiguration();
 
@@ -82,11 +82,15 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             if (sessionCount < sessionLimit) {
                 state = true;
             }
-
         } catch (IOException | FrameworkException e) {
-            //TODO
+            if(log.isDebugEnabled()){
+                log.debug("Problem occurred in session data retrieving");
+            }
             throw new AuthenticationFailedException("Problem occurred in session data retrieving", e);
         } catch (NumberFormatException e) {
+            if(log.isDebugEnabled()){
+                log.debug("Failed to retrieve session count from response");
+            }
             throw new AuthenticationFailedException("Failed to retrieve session count from response", e);
         }
         return state;
@@ -102,11 +106,10 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private void setAuthorizationHeader(HttpRequestBase httpMethod, String username, String password) {
 
         String toEncode = username + FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR + password;
-        byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName(CHARSET_NAME)));
+        byte[] encoding = Base64.encodeBase64(toEncode.getBytes(Charset.forName(StandardCharsets.UTF_8.name())));
         String authHeader = new String(encoding, Charset.defaultCharset());
         httpMethod.addHeader(HTTPConstants.HEADER_AUTHORIZATION,
                 FrameworkConstants.JSSessionCountValidation.AUTH_TYPE_KEY + authHeader);
-
     }
 
     /**

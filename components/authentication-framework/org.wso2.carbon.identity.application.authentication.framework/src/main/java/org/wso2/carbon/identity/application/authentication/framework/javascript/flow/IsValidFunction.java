@@ -29,6 +29,7 @@ import java.util.Map;
 @FunctionalInterface
 public interface IsValidFunction {
 
-    Boolean validate(JsAuthenticationContext context,Map<String,String> map) throws AuthenticationFailedException;
+    Boolean validate(JsAuthenticationContext context, Map<String,String> map)
+            throws AuthenticationFailedException;
 
 }

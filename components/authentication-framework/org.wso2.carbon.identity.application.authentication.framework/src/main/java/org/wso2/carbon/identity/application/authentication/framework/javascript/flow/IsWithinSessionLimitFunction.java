@@ -30,12 +30,13 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.graph.js.JsAuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
-import org.wso2.carbon.identity.application.authentication.framework.util.SessionValidationConfigParser;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,8 +56,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
     private static final String USERNAME_CONFIG_NAME = "AnalyticsCredentials.Username";
     private static final String PASSWORD_CONFIG_NAME = "AnalyticsCredentials.Password";
-    private static final Map<String, Object> configurations = SessionValidationConfigParser.getInstance()
-            .getConfiguration();
+
 
     /**
      * Method to validate user session a given the authentication context and set of required attributes
@@ -82,15 +82,10 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             if (sessionCount < sessionLimit) {
                 state = true;
             }
-        } catch (IOException | FrameworkException e) {
-            if(log.isDebugEnabled()){
-                log.debug("Problem occurred in session data retrieving");
-            }
+        } catch (FrameworkException e) {
             throw new AuthenticationFailedException("Problem occurred in session data retrieving", e);
-        } catch (NumberFormatException e) {
-            if(log.isDebugEnabled()){
-                log.debug("Failed to retrieve session count from response");
-            }
+        }
+        catch (NumberFormatException e) {
             throw new AuthenticationFailedException("Failed to retrieve session count from response", e);
         }
         return state;
@@ -122,8 +117,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      */
     private String getQuery(String tenantDomain, String username, String userStore) {
 
-        return FrameworkConstants.JSSessionCountValidation.QUOTE +
-                FrameworkConstants.JSSessionCountValidation.TENANT_DOMAIN_TAG +
+        return FrameworkConstants.JSSessionCountValidation.TENANT_DOMAIN_TAG +
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
                 tenantDomain +
                 FrameworkConstants.JSSessionCountValidation.AND_TAG +
@@ -133,8 +127,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
                 FrameworkConstants.JSSessionCountValidation.AND_TAG +
                 FrameworkConstants.JSSessionCountValidation.USER_STORE_TAG +
                 FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
-                userStore +
-                FrameworkConstants.JSSessionCountValidation.QUOTE;
+                userStore;
     }
 
     /**
@@ -156,49 +149,66 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      * @throws IOException        When reading response from the REST call is failed
      * @throws FrameworkException When the REST response is not in 200 state
      */
-    private int getActiveSessionCount(AuthenticatedUser authenticatedUser) throws IOException, FrameworkException {
+    private int getActiveSessionCount(AuthenticatedUser authenticatedUser) throws FrameworkException {
 
         int sessionCount;
-        String data = "{" +
+        JSONObject paramMap = new JSONObject();
 
-                FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG +
-                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
-                FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME + "," +
-                FrameworkConstants.JSSessionCountValidation.QUERY_TAG +
-                FrameworkConstants.JSSessionCountValidation.ATTRIBUTE_SEPARATOR +
-                getQuery(authenticatedUser.getTenantDomain(), authenticatedUser.getUserName(), authenticatedUser
-                        .getUserStoreDomain()) +
-                "}";
+        paramMap.put(FrameworkConstants.JSSessionCountValidation.TABLE_NAME_TAG,
+                FrameworkConstants.JSSessionCountValidation.ACTIVE_SESSION_TABLE_NAME);
+        paramMap.put(FrameworkConstants.JSSessionCountValidation.QUERY_TAG,
+                getQuery(authenticatedUser.getTenantDomain(),
+                        authenticatedUser.getUserName(),
+                        authenticatedUser.getUserStoreDomain()));
 
+        String data = paramMap.toString();
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
         StringEntity entity = new StringEntity(data, ContentType.APPLICATION_JSON);
         HttpClient httpClient = httpClientBuilder.build();
         HttpPost request = new HttpPost(FrameworkConstants.JSSessionCountValidation.TABLE_SEARCH_COUNT_URL);
 
         setAuthorizationHeader(request,
-                configurations.get(USERNAME_CONFIG_NAME).toString(),
-                configurations.get(PASSWORD_CONFIG_NAME).toString());
+                IdentityUtil.getProperty(USERNAME_CONFIG_NAME),
+                IdentityUtil.getProperty(PASSWORD_CONFIG_NAME));
         request.addHeader(FrameworkConstants.JSSessionCountValidation.CONTENT_TYPE_TAG, "application/json");
         request.setEntity(entity);
-        HttpResponse response = httpClient.execute(request);
+        try{
+            HttpResponse response = httpClient.execute(request);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
+                        FrameworkConstants.JSSessionCountValidation.UTF_8_TAG))){
+                    StringBuilder responseResult = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        responseResult.append(line);
+                    }
+                    sessionCount = parseInt(responseResult.toString());
+                    return sessionCount;
+                }
+                catch (IOException e){
+                    throw new FrameworkException("Problem occured while processing the HTTP Response ");
+                }
 
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
-                    FrameworkConstants.JSSessionCountValidation.UTF_8_TAG));
-            StringBuilder responseResult = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                responseResult.append(line);
             }
-            sessionCount = parseInt(responseResult.toString());
-            bufferedReader.close();
-            return sessionCount;
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Endpoint responded with " + response.getStatusLine().getStatusCode() + " status code");
+            else {
+                //TODO remove debug log
+                if (log.isDebugEnabled()) {
+                    log.debug("Endpoint responded with " + response.getStatusLine().getStatusCode() + " status code");
+                }
+                throw new FrameworkException("Failed to retrieve data from endpoint");
             }
-            throw new FrameworkException("Failed to retrieve data from endpoint");
+
+        }catch (IOException e){
+            //TODO
+           throw new FrameworkException("");
         }
 
-    }
+
+
+
+
+
+
+        }
+
 }

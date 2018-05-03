@@ -47,7 +47,7 @@ public class JavascriptFunctionsSupplierComponent {
     protected void activate(ComponentContext ctxt) {
         hasRoleFunction = new HasRoleFunction();
         jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "hasRole",
-                (IsExistsStringFunction) hasRoleFunction::contains);
+                (IsExistsStringFunction) hasRoleFunction);
         isWithinSessionLimitFunction = new IsWithinSessionLimitFunction();
         jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "isWithinSessionLimit",
                 (IsValidFunction) isWithinSessionLimitFunction::validate);

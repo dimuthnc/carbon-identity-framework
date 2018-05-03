@@ -28,6 +28,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
 import org.wso2.carbon.identity.application.authentication.framework.javascript.flow.HasRoleFunction;
 import org.wso2.carbon.identity.application.authentication.framework.javascript.flow.IsExistsStringFunction;
+import org.wso2.carbon.identity.application.authentication.framework.javascript.flow.IsValidFunction;
+import org.wso2.carbon.identity.application.authentication.framework.javascript.flow.IsWithinSessionLimitFunction;
 
 /**
  * Holds and supplies javascript function contribution to the framework.
@@ -38,6 +40,7 @@ import org.wso2.carbon.identity.application.authentication.framework.javascript.
 public class JavascriptFunctionsSupplierComponent {
 
     private JsFunctionRegistry jsFunctionRegistry;
+    private IsWithinSessionLimitFunction isWithinSessionLimitFunction;
     private HasRoleFunction hasRoleFunction;
 
     @Activate
@@ -45,12 +48,17 @@ public class JavascriptFunctionsSupplierComponent {
         hasRoleFunction = new HasRoleFunction();
         jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "hasRole",
                 (IsExistsStringFunction) hasRoleFunction::contains);
+        isWithinSessionLimitFunction = new IsWithinSessionLimitFunction();
+        jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "isWithinSessionLimit",
+                (IsValidFunction) isWithinSessionLimitFunction::validate);
     }
 
     @Deactivate
     protected void deactivate(ComponentContext ctxt) {
         if (jsFunctionRegistry != null) {
             jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "hasRole");
+            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER,
+                    "isWithinSessionLimit");
         }
     }
     

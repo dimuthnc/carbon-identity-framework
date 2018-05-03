@@ -54,8 +54,8 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
     private static final Log log = LogFactory.getLog(IsWithinSessionLimitFunction.class);
     private static final String USERNAME_CONFIG_NAME = "AnalyticsCredentials.Username";
     private static final String PASSWORD_CONFIG_NAME = "AnalyticsCredentials.Password";
-    private static final String CHARSET_NAME ="UTF-8";
-    private static final Map<String,Object> configurations = SessionValidationConfigParser.getInstance()
+    private static final String CHARSET_NAME = "UTF-8";
+    private static final Map<String, Object> configurations = SessionValidationConfigParser.getInstance()
             .getConfiguration();
 
     /**
@@ -67,7 +67,7 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
      * @return boolean value indicating the validation success/failure
      */
     @Override
-    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) throws AuthenticationFailedException  {
+    public Boolean validate(JsAuthenticationContext context, Map<String, String> map) throws AuthenticationFailedException {
 
         boolean state = false;
         int sessionLimit = getSessionLimitFromMap(map);
@@ -83,9 +83,9 @@ public class IsWithinSessionLimitFunction implements IsValidFunction {
             }
 
         } catch (IOException | FrameworkException e) {
-            throw new AuthenticationFailedException("Problem occurred in session data retrieving",e);
+            throw new AuthenticationFailedException("Problem occurred in session data retrieving", e);
         } catch (NumberFormatException e) {
-            throw new AuthenticationFailedException("Failed to retrieve session count from response",e);
+            throw new AuthenticationFailedException("Failed to retrieve session count from response", e);
         }
         return state;
     }
